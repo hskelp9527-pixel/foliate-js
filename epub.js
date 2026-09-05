@@ -78,8 +78,11 @@ const getAttributes = (...xs) => el =>
 const getElementText = el => normalizeWhitespace(el?.textContent)
 
 const childGetter = (doc, ns) => {
-    // ignore the namespace if it doesn't appear in document at all
-    const useNS = doc.lookupNamespaceURI(null) === ns || doc.lookupPrefix(ns)
+    // ignore the namespace unless the root element is actually in it: plenty of
+    // EPUB 2 files declare `xmlns:opf` only for `opf:role` / `opf:file-as`
+    // attributes while their elements are in no namespace at all, and keying
+    // off "the namespace appears somewhere" made every lookup miss there
+    const useNS = doc.documentElement.namespaceURI === ns
     const f = useNS
         ? (el, name) => el => el.namespaceURI === ns && el.localName === name
         : (el, name) => el => el.localName === name
